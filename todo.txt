@@ -1,0 +1,8 @@
+DONE:
+# second:
+- Added draw rectangle function
+- Added background grid
+- Added fullscreen
+# first:
+- Color buffer
+- SDL, window, renderer setup
