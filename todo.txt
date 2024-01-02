@@ -1,10 +1,26 @@
+NOTES:
+- Line drawing algorithms: DDA (easy to undertand) and Bresenham (fast)
+- Line equation: if m is 1 the line is 45° (x and y changing by the same number)
+- Line equation: m is tangent
+- Line equation: m tells us how fast y changes in comparison to x (rise (m over 1) / run (m under 1))
+- Line equation: m = Δy / Δx (Δy is change in y and Δx is change in x)
+- Line equation: y = mx + c (m is the slope, c is the y-intercept value)
+- Sin: s = o / h
+- Cos: c = a / h
+- Tan: t = o / a
+- Triangle: a (adjacent), o (opposite), h (hypotenuse)
+
 TODO:
+- Change DDA line drawing algorithm to Bresenham
 
 BUGS:
 
 DONE:
+	# Sixth:
+		- Added function to draw triangle
+		- Added function to draw line with DDA line drawing algorithm
 	# Fifth:
-		- Added function to render the vertexes of the cube
+		- Added rendering of the vertexes of the cube
 		- Manually made a cube with 8 vertexes (one on each corner of the cube) and 12 faces (two triangles to form a plane on each side of the cube)
 		- Added triangle_t for 2d triangles (containing three vec2 points)
 		- Added face_t for faces (containing a, b, c. index values for vertexes)
