@@ -3,6 +3,8 @@ TODO:
 BUGS:
 
 DONE:
+	# Fourth:
+		- Added perspective projection
 	# Third:
 		- Added project function with orthographic projection of vec3 points
 		- Made cube filled with vec3 points
