@@ -1,57 +1,22 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#define SDL_MAIN_HANDLED // TODO: REMOVE THIS LINE
+#define SDL_MAIN_HANDLED // TODO: REMOVE THIS LINE?
 #include <SDL2/SDL.h>
+#include "display.h"
+#include "vector.h"
+
+//////////////////////////////////////////////////////////////////////////////
+// Declare array of vectors / points
+//////////////////////////////////////////////////////////////////////////////
+#define N_POINTS (9 * 9 * 9)
+//const int N_POINTS = 9 * 9 * 9;
+vec3_t cube_points[N_POINTS];
+vec2_t projected_points[N_POINTS];
+
+float fov_factor = 128;
 
 bool is_running = false;
-
-SDL_Window* window = NULL;
-SDL_Renderer* renderer = NULL;
-
-uint32_t* color_buffer = NULL;
-SDL_Texture* color_buffer_texture = NULL;
-
-int window_width = 800;
-int window_height = 600;
-
-bool initialize_window(void) {
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-		fprintf(stderr, "Error initializing SDL.\n");
-		return false;
-	}
-	
-	// Use SDL to query what the fullscreen max width and height
-	SDL_DisplayMode display_mode;
-	SDL_GetCurrentDisplayMode(0, &display_mode);
-	window_width = display_mode.w;
-	window_height = display_mode.h;
-
-	// Create a SDL Window
-	window = SDL_CreateWindow(
-		NULL, 
-		SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED,
-		window_width,
-		window_height,
-		SDL_WINDOW_BORDERLESS
-	);
-	if (!window) {
-		fprintf(stderr, "Error creating SDL window.\n");
-		return false;
-	}
-	
-	// Create a SDL renderer
-	renderer = SDL_CreateRenderer(window, -1, 0);
-	if (!renderer) {
-		fprintf(stderr, "Error creating SDL renderer.\n");
-		return false;
-	}
-
-	SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-
-	return true;
-}
 
 void setup(void) {
 	// Allocate the required bytes in memory to hold the color buffer
@@ -63,7 +28,16 @@ void setup(void) {
 		SDL_TEXTUREACCESS_STREAMING,
 		window_width,
 		window_height
-		);
+	);
+	int point_count = 0;
+	for (float x = -1; x <= 1; x += 0.25) {
+		for (float y = -1; y <= 1; y += 0.25) {
+			for (float z = -1; z <= 1; z += 0.25) {
+				vec3_t new_point = {.x = x, .y = y, .z = z};
+				cube_points[point_count++] = new_point;
+			}
+		}
+	}
 }
 
 void process_input(void) {
@@ -81,62 +55,47 @@ void process_input(void) {
 	}
 }
 
+// Function that receives a 3D vector and returns a projected 2D point
+vec2_t project(vec3_t point) {
+	vec2_t projected_point = {
+		.x = (fov_factor * point.x),
+		.y = (fov_factor * point.y)
+	};
+	return projected_point;
+}
+
 void update(void) {	
-	// TODO:
-}
+	for (int i = 0; i < N_POINTS; i++) {
+		vec3_t point = cube_points[i];
+		
+		// Project the current point
+		vec2_t projected_point = project(point);
 
-void render_color_buffer(void) {
-	SDL_UpdateTexture(
-		color_buffer_texture,
-		NULL,
-		color_buffer,
-		(int) (window_width * sizeof(uint32_t))
-		);
-	SDL_RenderCopy(renderer, color_buffer_texture, NULL, NULL);
-}
-
-void clear_color_buffer(uint32_t color) {
-	for (int y = 0; y < window_height; y++)
-		for (int x = 0; x < window_width; x++) {
-			color_buffer[(window_width * y) + x] = color;
-		}
-}
-
-void draw_grid(void) {
-	for (int y = 0; y < window_height; y += 10) {
-		for (int x = 0; x < window_width; x += 10) {
-			color_buffer[(window_width * y) + x] = 0xFF444444;
-		}
-	}
-
-}
-
-void draw_rect(int start_x, int start_y, int width, int height, uint32_t color) {
-	for (int y = start_y; y < (start_y + height); y++) {
-		for (int x = start_x; x < (start_x + width); x++) {
-			color_buffer[(window_width * y) + x] = color;
-		}
+		// Save the projected 2D vector in the array of projected points
+		projected_points[i] = projected_point;
 	}
 }
-
-/*
-void draw_rect_alt(int x, int y, int width, int height, uint32_t color) {
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
-			int current_x = x + i;
-			int current_y = y + j;
-			color_buffer[(window_width * current_y) + current_x] = color;
-		}
-	}
-}
-*/
 
 void render(void) {
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer);
+	//SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	//SDL_RenderClear(renderer);
 	
 	draw_grid();
-	draw_rect(200, 200, 300, 150, 0xFFFF0000);
+	//draw_rect(200, 200, 300, 150, 0xFFFF0000);
+
+	//draw_pixel(20, 20, 0xFFFF0000);
+
+	// Loop all projected points and render them
+	for (int i = 0; i < N_POINTS; i++) {
+		vec2_t projected_point = projected_points[i];
+		draw_rect(
+			projected_point.x + (window_width / 2), 
+			projected_point.y + (window_height / 2), 
+			4, 
+			4,
+			0xFFFFFF00
+		);
+	}
 
 	render_color_buffer();
 	clear_color_buffer(0xFF111111);
@@ -144,18 +103,10 @@ void render(void) {
 	SDL_RenderPresent(renderer);
 }
 
-void destroy_window(void) {
-	free(color_buffer);
-	SDL_DestroyRenderer(renderer);
-	SDL_DestroyWindow(window);
-	SDL_Quit();
-}
-
 int main(void) {
 	is_running = initialize_window();
 	
 	setup();
-	//color_buffer[(window_width * 10) + 20] = 0xFFFF0000;
 
 	while(is_running) {
 		process_input();

@@ -1,8 +1,18 @@
+TODO:
+
+BUGS:
+
 DONE:
-# second:
-- Added draw rectangle function
-- Added background grid
-- Added fullscreen
-# first:
-- Color buffer
-- SDL, window, renderer setup
+	# Third:
+		- Added project function with orthographic projection of vec3 points
+		- Made cube filled with vec3 points
+		- Added vector.h and vector.c with vec2_t and vec3_t
+		- Added draw_pixel function
+		- Making display.h and display.c and moving display/window related code to new file
+	# Second:
+		- Added draw rectangle function
+		- Added background grid
+		- Added fullscreen
+	# First:
+		- Added color buffer
+		- SDL, SDL window, SDL renderer and game loop setup
