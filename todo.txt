@@ -3,6 +3,14 @@ TODO:
 BUGS:
 
 DONE:
+	# Fifth:
+		- Added function to render the vertexes of the cube
+		- Manually made a cube with 8 vertexes (one on each corner of the cube) and 12 faces (two triangles to form a plane on each side of the cube)
+		- Added triangle_t for 2d triangles (containing three vec2 points)
+		- Added face_t for faces (containing a, b, c. index values for vertexes)
+		- Added triangle and mesh files
+		- Added max framerate to game loop
+		- Added x, y and z rotation for vec3 points
 	# Fourth:
 		- Added perspective projection
 	# Third:
