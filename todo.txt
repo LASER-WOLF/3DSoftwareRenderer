@@ -16,6 +16,8 @@ TODO:
 BUGS:
 
 DONE:
+	#Seventh:
+		- Added function to load (and render) .obj file
 	# Sixth:
 		- Added function to draw triangle
 		- Added function to draw line with DDA line drawing algorithm
