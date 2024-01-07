@@ -16,7 +16,15 @@ TODO:
 BUGS:
 
 DONE:
-	# Eigth:
+	# Ninth:
+		- Added matrix rotation function
+		- Added matrix translation function
+		- Added matrix scaling function
+		- Added identity matrix
+		- Added matrix multiplication function
+		- Added mat4_t and vec4_t
+		- Added matrix.h and matrix.c
+	# Eighth:
 		- Added simple z sorting of faces with painter algorithm
 		- Added color value to faces
 		- Added buttons to change rendering mode (Keyboard button 1-4) and butons to enable/disable backface culling (C and D)
