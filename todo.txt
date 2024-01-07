@@ -16,7 +16,14 @@ TODO:
 BUGS:
 
 DONE:
-	#Seventh:
+	# Eigth:
+		- Added simple z sorting of faces with painter algorithm
+		- Added color value to faces
+		- Added buttons to change rendering mode (Keyboard button 1-4) and butons to enable/disable backface culling (C and D)
+		- Added filled triangle rendering
+		- Added backface culling
+		- Added several new vector functions
+	# Seventh:
 		- Added function to load (and render) .obj file
 	# Sixth:
 		- Added function to draw triangle
