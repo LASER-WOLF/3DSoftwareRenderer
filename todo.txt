@@ -16,6 +16,13 @@ TODO:
 BUGS:
 
 DONE:
+	# Eleventh:
+		- Added flat shading lighting to rendering
+		- Added light.h and light.c with global light type and light intensity function
+		- Changed projection to use the projection matrix
+		- Added projection matrix and accompanying functions (mat4_make_perspective and mat4_mul_vec4_project)
+	# Tenth:
+		- Added world matrix (combining scaling, rotation and translation)
 	# Ninth:
 		- Added matrix rotation function
 		- Added matrix translation function
