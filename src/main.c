@@ -66,15 +66,13 @@ void setup(void) {
 	float znear = 0.1;
 	float zfar = 100.0;
 	proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
-
-	// Manually load the hardcoded texture data from the static array
-	mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
-	texture_width = 64;
-	texture_height = 64;
 	
 	// Loads the cube values in the mesh data structure
 	load_cube_mesh_data();
 	//load_obj_file_data("./assets/f22.obj");
+
+	// Manually load the hardcoded texture data from the static array
+	mesh_texture = (uint32_t*) REDBRICK_TEXTURE;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -286,15 +284,15 @@ void render(void) {
 			);
 		}
 
-		// Draw textured triangle
-		if (render_method == RENDER_TEXTURED || render_method ==RENDER_TEXTURED_WIRE) {
-			draw_textured_triangle(
-				triangle.points[0].x, triangle.points[0].y, triangle.texcoords[0].u, triangle.texcoords[0].v, 
-				triangle.points[1].x, triangle.points[1].y, triangle.texcoords[1].u, triangle.texcoords[1].v,
-				triangle.points[2].x, triangle.points[2].y, triangle.texcoords[2].u, triangle.texcoords[2].v,
-				mesh_texture
-			);
-		}
+        // Draw textured triangle
+        if (render_method == RENDER_TEXTURED || render_method == RENDER_TEXTURED_WIRE) {
+            draw_textured_triangle(
+                triangle.points[0].x, triangle.points[0].y, triangle.texcoords[0].u, triangle.texcoords[0].v, // vertex A
+                triangle.points[1].x, triangle.points[1].y, triangle.texcoords[1].u, triangle.texcoords[1].v, // vertex B
+                triangle.points[2].x, triangle.points[2].y, triangle.texcoords[2].u, triangle.texcoords[2].v, // vertex C
+                mesh_texture
+            );
+        }
 
 		// Draw unfilled triangle
 		if (render_method == RENDER_WIRE || render_method == RENDER_WIRE_VERTEX || render_method == RENDER_FILL_TRIANGLE_WIRE || render_method == RENDER_TEXTURED_WIRE

@@ -19,6 +19,8 @@ TODO:
 BUGS:
 
 DONE:
+	# Thirteenth:
+		- Added draw_texel function
 	# Twelfth:
 		(Texture Mapping)
 		- Added UNFINISHED (missing the color information from the texels, currently has a placeholder color) function to draw textured triangles
