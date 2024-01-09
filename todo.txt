@@ -1,4 +1,7 @@
 NOTES:
+- Barycentric coordinates in triangles uses three weigths, alpha, beta and gamma (P = α,β,γ) with values 0-1 and the sum of all three weights is always 1.
+- Texturing: Triangle has three UV points and uses barycentric coordinates to find the correct texel (texure pixel) for the 2D pixel inside the triangle
+- Texturing: Vertices have UV coordinates that represents position on texture
 - Line drawing algorithms: DDA (easy to undertand) and Bresenham (fast)
 - Line equation: if m is 1 the line is 45° (x and y changing by the same number)
 - Line equation: m is tangent
@@ -16,14 +19,26 @@ TODO:
 BUGS:
 
 DONE:
+	# Twelfth:
+		(Texture Mapping)
+		- Added UNFINISHED (missing the color information from the texels, currently has a placeholder color) function to draw textured triangles
+		- Added function to find barycentric coordinates for a point on a triangle
+		- Added swap.h & swap.c (with functions for swapping ints and floats)
+		- Added new render mode (textured triangle)
+		- Added uv texture coords to triangles and faces
+		- Added tex2_t
+		- Added texture.h & texture.c
 	# Eleventh:
+		(Projection matrix & Light and shading)
 		- Added flat shading lighting to rendering
 		- Added light.h and light.c with global light type and light intensity function
 		- Changed projection to use the projection matrix
 		- Added projection matrix and accompanying functions (mat4_make_perspective and mat4_mul_vec4_project)
 	# Tenth:
+		(Matrices)
 		- Added world matrix (combining scaling, rotation and translation)
 	# Ninth:
+		(Matrices)
 		- Added matrix rotation function
 		- Added matrix translation function
 		- Added matrix scaling function
@@ -32,6 +47,7 @@ DONE:
 		- Added mat4_t and vec4_t
 		- Added matrix.h and matrix.c
 	# Eighth:
+		(Vector Operations, Triangle Rasterization & Sorting Faces by Depth)
 		- Added simple z sorting of faces with painter algorithm
 		- Added color value to faces
 		- Added buttons to change rendering mode (Keyboard button 1-4) and butons to enable/disable backface culling (C and D)
@@ -39,11 +55,14 @@ DONE:
 		- Added backface culling
 		- Added several new vector functions
 	# Seventh:
+		(Dynamic Arrays & OBJ Files)
 		- Added function to load (and render) .obj file
 	# Sixth:
+		(Line Drawing)
 		- Added function to draw triangle
 		- Added function to draw line with DDA line drawing algorithm
 	# Fifth:
+		(Linear Transformations, Fixed Time Step & Triangles and Vertices)
 		- Added rendering of the vertexes of the cube
 		- Manually made a cube with 8 vertexes (one on each corner of the cube) and 12 faces (two triangles to form a plane on each side of the cube)
 		- Added triangle_t for 2d triangles (containing three vec2 points)
@@ -52,17 +71,21 @@ DONE:
 		- Added max framerate to game loop
 		- Added x, y and z rotation for vec3 points
 	# Fourth:
+		(Projecting Points)
 		- Added perspective projection
 	# Third:
+		(Multiple Header Files, Vectors and Points & Projecting Points)
 		- Added project function with orthographic projection of vec3 points
 		- Made cube filled with vec3 points
 		- Added vector.h and vector.c with vec2_t and vec3_t
 		- Added draw_pixel function
 		- Making display.h and display.c and moving display/window related code to new file
 	# Second:
+		(SDL, Setup and Color Buffer)
 		- Added draw rectangle function
 		- Added background grid
 		- Added fullscreen
 	# First:
+		(Introduction, Compiling our Project & SDL Setup and Color Buffer)
 		- Added color buffer
 		- SDL, SDL window, SDL renderer and game loop setup

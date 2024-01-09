@@ -5,11 +5,12 @@
 #include <SDL2/SDL.h>
 #include "array.h"
 #include "display.h"
-#include "mesh.h"
-#include "triangle.h"
-#include "vector.h"
 #include "matrix.h"
 #include "light.h"
+#include "mesh.h"
+#include "texture.h"
+#include "triangle.h"
+#include "vector.h"
 
 enum cull_method {
 	CULL_NONE,
@@ -20,7 +21,9 @@ enum render_method {
 	RENDER_WIRE,
 	RENDER_WIRE_VERTEX,
 	RENDER_FILL_TRIANGLE,
-	RENDER_FILL_TRIANGLE_WIRE
+	RENDER_FILL_TRIANGLE_WIRE,
+	RENDER_TEXTURED,
+	RENDER_TEXTURED_WIRE
 } render_method;
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -64,9 +67,14 @@ void setup(void) {
 	float zfar = 100.0;
 	proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 
+	// Manually load the hardcoded texture data from the static array
+	mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+	texture_width = 64;
+	texture_height = 64;
+	
 	// Loads the cube values in the mesh data structure
-	//load_cube_mesh_data();
-	load_obj_file_data("./assets/f22.obj");
+	load_cube_mesh_data();
+	//load_obj_file_data("./assets/f22.obj");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -90,6 +98,10 @@ void process_input(void) {
 				render_method = RENDER_FILL_TRIANGLE;
 			if (event.key.keysym.sym == SDLK_4)
 				render_method = RENDER_FILL_TRIANGLE_WIRE;
+			if (event.key.keysym.sym == SDLK_5)
+				render_method = RENDER_TEXTURED;
+			if (event.key.keysym.sym == SDLK_6)
+				render_method = RENDER_TEXTURED_WIRE;
 			if (event.key.keysym.sym == SDLK_c)
 				cull_method = CULL_BACKFACE;
 			if (event.key.keysym.sym == SDLK_d)
@@ -118,7 +130,7 @@ void update(void) {
 	//mesh.scale.x += 0.002;
 	//mesh.scale.y += 0.001;
 	//mesh.scale.z += 0.001;
-	mesh.rotation.x += 0.005;
+	mesh.rotation.x += 0.003;
 	//mesh.rotation.y += 0.01;
 	//mesh.rotation.z += 0.01;
 	//mesh.translation.x += 0.01;
@@ -212,7 +224,7 @@ void update(void) {
 			projected_points[j].y += (window_height / 2.0);
 		}
 
-		// Calculate the average deptj for each face based on the verts after transformation
+		// Calculate the average depth for each face based on the verts after transformation
 		float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3.0;
 
 		// Calculate the shade intensity based on how aligned the face normal and the inverse of the light ray
@@ -221,15 +233,16 @@ void update(void) {
 		// Calculate the triangle color based on the light angle
 		uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intensity_factor);
 
-		float light_flat = vec3_dot(normal, light.direction);
-		uint32_t new_color = light_apply_intensity(mesh_face
-		.color, light_flat); 
-
 		triangle_t projected_triangle = {
 			.points = {
 				{ projected_points[0].x, projected_points[0].y },
 				{ projected_points[1].x, projected_points[1].y },
 				{ projected_points[2].x, projected_points[2].y }
+			},
+			.texcoords = {
+				{ mesh_face.a_uv.u, mesh_face.a_uv.v },
+				{ mesh_face.b_uv.u, mesh_face.b_uv.v },
+				{ mesh_face.c_uv.u, mesh_face.c_uv.v }
 			},
 			.color = triangle_color,
 			.avg_depth = avg_depth
@@ -273,8 +286,19 @@ void render(void) {
 			);
 		}
 
+		// Draw textured triangle
+		if (render_method == RENDER_TEXTURED || render_method ==RENDER_TEXTURED_WIRE) {
+			draw_textured_triangle(
+				triangle.points[0].x, triangle.points[0].y, triangle.texcoords[0].u, triangle.texcoords[0].v, 
+				triangle.points[1].x, triangle.points[1].y, triangle.texcoords[1].u, triangle.texcoords[1].v,
+				triangle.points[2].x, triangle.points[2].y, triangle.texcoords[2].u, triangle.texcoords[2].v,
+				mesh_texture
+			);
+		}
+
 		// Draw unfilled triangle
-		if (render_method == RENDER_WIRE || render_method == RENDER_WIRE_VERTEX || render_method == RENDER_FILL_TRIANGLE_WIRE) {
+		if (render_method == RENDER_WIRE || render_method == RENDER_WIRE_VERTEX || render_method == RENDER_FILL_TRIANGLE_WIRE || render_method == RENDER_TEXTURED_WIRE
+			) {
 			draw_triangle(
 				triangle.points[0].x, triangle.points[0].y, 
 				triangle.points[1].x, triangle.points[1].y, 
