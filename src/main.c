@@ -3,14 +3,15 @@
 #include <stdint.h>
 #define SDL_MAIN_HANDLED // TODO: REMOVE THIS LINE?
 #include <SDL2/SDL.h>
+#include "upng.h"
 #include "array.h"
 #include "display.h"
+#include "vector.h"
 #include "matrix.h"
 #include "light.h"
-#include "mesh.h"
-#include "texture.h"
 #include "triangle.h"
-#include "vector.h"
+#include "texture.h"
+#include "mesh.h"
 
 enum cull_method {
 	CULL_NONE,
@@ -54,7 +55,7 @@ void setup(void) {
 	// Creating a SDL texture that is used to display the color buffer
 	color_buffer_texture = SDL_CreateTexture(
 		renderer,
-		SDL_PIXELFORMAT_ARGB8888,
+		SDL_PIXELFORMAT_RGBA32,
 		SDL_TEXTUREACCESS_STREAMING,
 		window_width,
 		window_height
@@ -71,8 +72,11 @@ void setup(void) {
 	load_cube_mesh_data();
 	//load_obj_file_data("./assets/f22.obj");
 
+	// Load thhe texture information from an external PNG file
+	load_png_texture_data("./assets/cube.png");
+
 	// Manually load the hardcoded texture data from the static array
-	mesh_texture = (uint32_t*) REDBRICK_TEXTURE;
+	//mesh_texture = (uint32_t*) REDBRICK_TEXTURE;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +122,7 @@ void update(void) {
 	if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
 		SDL_Delay(time_to_wait);
 	}
-	
+
 	previous_frame_time = SDL_GetTicks();
 
 	// Initialize the array of triangles to render
@@ -128,8 +132,8 @@ void update(void) {
 	//mesh.scale.x += 0.002;
 	//mesh.scale.y += 0.001;
 	//mesh.scale.z += 0.001;
-	mesh.rotation.x += 0.003;
-	//mesh.rotation.y += 0.01;
+	//mesh.rotation.x += 0.003;
+	mesh.rotation.y += 0.001;
 	//mesh.rotation.z += 0.01;
 	//mesh.translation.x += 0.01;
 	mesh.translation.z = 5.0;
@@ -233,9 +237,9 @@ void update(void) {
 
 		triangle_t projected_triangle = {
 			.points = {
-				{ projected_points[0].x, projected_points[0].y },
-				{ projected_points[1].x, projected_points[1].y },
-				{ projected_points[2].x, projected_points[2].y }
+				{ projected_points[0].x, projected_points[0].y, projected_points[0].z, projected_points[0].w },
+				{ projected_points[1].x, projected_points[1].y, projected_points[1].z, projected_points[1].w },
+				{ projected_points[2].x, projected_points[2].y, projected_points[2].z, projected_points[2].w }
 			},
 			.texcoords = {
 				{ mesh_face.a_uv.u, mesh_face.a_uv.v },
@@ -277,9 +281,9 @@ void render(void) {
 		// Draw filled triangle
 		if (render_method == RENDER_FILL_TRIANGLE || render_method ==RENDER_FILL_TRIANGLE_WIRE) {
 			draw_filled_triangle(
-				triangle.points[0].x, triangle.points[0].y, 
-				triangle.points[1].x, triangle.points[1].y, 
-				triangle.points[2].x, triangle.points[2].y, 
+				triangle.points[0].x, triangle.points[0].y,
+				triangle.points[1].x, triangle.points[1].y,
+				triangle.points[2].x, triangle.points[2].y,
 				triangle.color
 			);
 		}
@@ -287,9 +291,9 @@ void render(void) {
         // Draw textured triangle
         if (render_method == RENDER_TEXTURED || render_method == RENDER_TEXTURED_WIRE) {
             draw_textured_triangle(
-                triangle.points[0].x, triangle.points[0].y, triangle.texcoords[0].u, triangle.texcoords[0].v, // vertex A
-                triangle.points[1].x, triangle.points[1].y, triangle.texcoords[1].u, triangle.texcoords[1].v, // vertex B
-                triangle.points[2].x, triangle.points[2].y, triangle.texcoords[2].u, triangle.texcoords[2].v, // vertex C
+                triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, triangle.texcoords[0].u, triangle.texcoords[0].v, // vertex A
+                triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w, triangle.texcoords[1].u, triangle.texcoords[1].v, // vertex B
+                triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.texcoords[2].u, triangle.texcoords[2].v, // vertex C
                 mesh_texture
             );
         }
@@ -328,6 +332,7 @@ void render(void) {
 /////////////////////////////////////////////////////////////////////////////////////
 void free_resources(void) {
 	free(color_buffer);
+	upng_free(png_texture);
 	array_free(mesh.vertices);
 	array_free(mesh.faces);
 }
