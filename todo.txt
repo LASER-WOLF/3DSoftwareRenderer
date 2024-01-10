@@ -16,10 +16,15 @@ NOTES:
 
 TODO:
 - Change DDA line drawing algorithm to Bresenham
+- Change png color decoding and SDL rendering from RGBA32 -> ARGB8888
+- Change render pipeline to use floating point coordinates
 
 BUGS:
 
 DONE:
+	# Fifteenth:
+		- Added limit on interpolated UV coords in draw_texel() to stay within texture width/height (to prevent texture buffer overflow due to inaccuracy caused by using int instead of float for x and y)
+		- Added loading of UV coords from obj file
 	# Fourteenth:
 		- Added function to load PNG files using upng.h / upng.c
 		- Added perspective correct interpolation to draw_texel()

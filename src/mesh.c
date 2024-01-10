@@ -61,12 +61,18 @@ void load_obj_file_data(char* filename){
 	if (file == NULL) {
 		printf("Not able to open .obj file.");
 	} else {
+		tex2_t* texcoords = NULL;
 		while (fgets(line, 512, file)) {
 			// Read vertex data
 			if (line[0] == 'v' && line[1] == ' ') {
 				vec3_t vertex;
 				sscanf(line, "v %f %f %f", &vertex.x, &vertex.y, &vertex.z);
 				array_push(mesh.vertices, vertex);
+			// Read vertex texture UV
+			} else if (line[0] == 'v' && line[1] == 't') {
+				tex2_t texcoord;
+				sscanf(line, "vt %f %f", &texcoord.u, &texcoord.v);
+				array_push(texcoords, texcoord);
 			// Read face data
 			} else if (line[0] == 'f' && line[1] == ' ') {
 				int vertex_indices[3];
@@ -78,14 +84,18 @@ void load_obj_file_data(char* filename){
 					&vertex_indices[2], &texture_indices[2], &normal_indices[2]
 				);
 				face_t face = {
-					.a = vertex_indices[0],
-					.b = vertex_indices[1],
-					.c = vertex_indices[2],
+					.a = vertex_indices[0] - 1,
+					.b = vertex_indices[1] - 1,
+					.c = vertex_indices[2] - 1,
+					.a_uv = texcoords[texture_indices[0] - 1],
+					.b_uv = texcoords[texture_indices[1] - 1],
+					.c_uv = texcoords[texture_indices[2] - 1],
 					.color = 0xFFFFFFFF
 				};
 				array_push(mesh.faces, face);
 			}
 		}
+		array_free(texcoords);
 	}
 	fclose(file);
 }

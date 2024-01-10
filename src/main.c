@@ -69,11 +69,11 @@ void setup(void) {
 	proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 	
 	// Loads the cube values in the mesh data structure
-	load_cube_mesh_data();
-	//load_obj_file_data("./assets/f22.obj");
+	//load_cube_mesh_data();
+	load_obj_file_data("./assets/crab.obj");
 
 	// Load thhe texture information from an external PNG file
-	load_png_texture_data("./assets/cube.png");
+	load_png_texture_data("./assets/crab.png");
 
 	// Manually load the hardcoded texture data from the static array
 	//mesh_texture = (uint32_t*) REDBRICK_TEXTURE;
@@ -132,8 +132,8 @@ void update(void) {
 	//mesh.scale.x += 0.002;
 	//mesh.scale.y += 0.001;
 	//mesh.scale.z += 0.001;
-	//mesh.rotation.x += 0.003;
-	mesh.rotation.y += 0.001;
+	mesh.rotation.x += 0.003;
+	//mesh.rotation.y += 0.001;
 	//mesh.rotation.z += 0.01;
 	//mesh.translation.x += 0.01;
 	mesh.translation.z = 5.0;
@@ -152,9 +152,9 @@ void update(void) {
 		face_t mesh_face = mesh.faces[i];
 		
 		vec3_t face_vertices[3];
-		face_vertices[0] = mesh.vertices[mesh_face.a - 1];
-		face_vertices[1] = mesh.vertices[mesh_face.b - 1];
-		face_vertices[2] = mesh.vertices[mesh_face.c - 1];
+		face_vertices[0] = mesh.vertices[mesh_face.a];
+		face_vertices[1] = mesh.vertices[mesh_face.b];
+		face_vertices[2] = mesh.vertices[mesh_face.c];
 
 		vec4_t transformed_vertices[3];
 
