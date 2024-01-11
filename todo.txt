@@ -1,4 +1,5 @@
 NOTES:
+- Building a PS1 style retro 3D renderer: https://www.david-colson.com/2021/11/30/ps1-style-renderer.html
 - Perspective-Correct Interpolation paper: https://s3.amazonaws.com/thinkific/file_uploads/167815/attachments/c06/b72/f58/KokLimLow-PerspectiveCorrectInterpolation.pdf
 - Barycentric coordinates in triangles uses three weigths, alpha, beta and gamma (P = α,β,γ) with values 0-1 and the sum of all three weights is always 1.
 - Texturing: Triangle has three UV points and uses barycentric coordinates to find the correct texel (texure pixel) for the 2D pixel inside the triangle
@@ -15,6 +16,7 @@ NOTES:
 - Triangle: a (adjacent), o (opposite), h (hypotenuse)
 
 TODO:
+- Add light to textured triangles
 - Change DDA line drawing algorithm to Bresenham
 - Change png color decoding and SDL rendering from RGBA32 -> ARGB8888
 - Change render pipeline to use floating point coordinates
@@ -22,6 +24,15 @@ TODO:
 BUGS:
 
 DONE:
+	# Sixteenth:
+		- Added simple FPS camera controller (wasd + up/down controls)
+		- Added variable delta-time
+		- Added camera and view matrix for transforming the vertices to camera space
+		- Added mat4_look_at() to make a matrix for looking at a target position
+		- Added camera.h / camera.c with camera_t
+		- Replaced dynamic array with static array for triangles_to_render in main.c (to improve performance)
+		- Removed painter's alogrithm depth sorting (replaced with z-buffer)
+		- Added Z-buffer (for textured triangles and filled triangles)
 	# Fifteenth:
 		- Added limit on interpolated UV coords in draw_texel() to stay within texture width/height (to prevent texture buffer overflow due to inaccuracy caused by using int instead of float for x and y)
 		- Added loading of UV coords from obj file
