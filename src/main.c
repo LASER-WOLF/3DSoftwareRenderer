@@ -13,6 +13,7 @@
 #include "triangle.h"
 #include "texture.h"
 #include "mesh.h"
+#include "clipping.h"
 
 enum cull_method {
 	CULL_NONE,
@@ -71,18 +72,23 @@ void setup(void) {
 	);
 
 	// Initialize the perspective projection matrix
-	float fov = M_PI / 3.0;                      // the same as 180 / 3 or 60deg
-	float aspect = (float)window_height / (float)window_width;
-	float znear = 0.1;
-	float zfar = 100.0;
-	proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
+	float aspectx = (float)window_width / (float)window_height;
+	float aspecty = (float)window_height / (float)window_width;
+	float fovy = M_PI / 3.0;  // the same as 180 / 3 or 60deg
+	float fovx = atan(tan(fovy / 2) * aspectx) * 2.0;
+	float z_near = 0.1;
+	float z_far = 100.0;
+	proj_matrix = mat4_make_perspective(fovy, aspecty, z_near, z_far);
 	
+	// Initialize frustum planes with a point and a normal
+	init_frustum_planes(fovx, fovy, z_near, z_far);
+
 	// Loads the cube values in the mesh data structure
 	//load_cube_mesh_data();
-	load_obj_file_data("./assets/f22.obj");
+	load_obj_file_data("./assets/cube.obj");
 
 	// Load thhe texture information from an external PNG file
-	load_png_texture_data("./assets/f22.png");
+	load_png_texture_data("./assets/cube.png");
 
 	// Manually load the hardcoded texture data from the static array
 	//mesh_texture = (uint32_t*) REDBRICK_TEXTURE;
@@ -193,6 +199,7 @@ void update(void) {
 	// Loop all triangle faces of our mesh
 	int num_faces = array_length(mesh.faces);
 	for (int i = 0; i < num_faces; i++) {
+
 		face_t mesh_face = mesh.faces[i];
 		
 		vec3_t face_vertices[3];
@@ -256,48 +263,71 @@ void update(void) {
 			}
 		}
 		
-		// Project
-		vec4_t projected_points[3];
-		for (int j = 0; j < 3; j++) {
-			// Project the current vertex
-			projected_points[j] = mat4_mul_vec4_project(proj_matrix, transformed_vertices[j]);
+		// Create a polygon from the original transformed triangle to be clipped
+		polygon_t polygon = polygon_from_triangle(
+			vec3_from_vec4(transformed_vertices[0]),
+			vec3_from_vec4(transformed_vertices[1]),
+			vec3_from_vec4(transformed_vertices[2]),
+			mesh_face.a_uv,
+			mesh_face.b_uv,
+			mesh_face.c_uv
+		);
 
-			// Scale into the view
-			projected_points[j].x *= (window_width / 2.0);
-			projected_points[j].y *= (window_height / 2.0);
+		// Clip the polygon and returns a new polygon with potentional new vertices
+		clip_polygon(&polygon);
 
-			// Invert the y values to account for flipped screen y coordinate
-			projected_points[j].y *= -1;
+		// Break the clipped polygon apart back into indicidual triangles
+		triangle_t triangles_after_clipping[MAX_NUM_POLY_TRIANGLES];
+		int num_triangles_after_clipping = 0;
+		triangles_from_polygon(&polygon, triangles_after_clipping, &num_triangles_after_clipping);
 
-			// Translate the projected points to the middle of the screen
-			projected_points[j].x += (window_width / 2.0);
-			projected_points[j].y += (window_height / 2.0);
-		}
+		// Loops all the assembled triangles after clipping
+		for (int t = 0; t < num_triangles_after_clipping; t++) {
+			triangle_t triangle_after_clipping = triangles_after_clipping[t];
 
-		// Calculate the shade intensity based on how aligned the face normal and the inverse of the light ray
-		float light_intensity_factor = -vec3_dot(normal, light.direction);
+			// Project
+			vec4_t projected_points[3];
+			for (int j = 0; j < 3; j++) {
+				// Project the current vertex
+				projected_points[j] = mat4_mul_vec4_project(proj_matrix, triangle_after_clipping.points[j]);
 
-		// Calculate the triangle color based on the light angle
-		uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intensity_factor);
+				// Scale into the view
+				projected_points[j].x *= (window_width / 2.0);
+				projected_points[j].y *= (window_height / 2.0);
 
-		triangle_t projected_triangle = {
-			.points = {
-				{ projected_points[0].x, projected_points[0].y, projected_points[0].z, projected_points[0].w },
-				{ projected_points[1].x, projected_points[1].y, projected_points[1].z, projected_points[1].w },
-				{ projected_points[2].x, projected_points[2].y, projected_points[2].z, projected_points[2].w }
-			},
-			.texcoords = {
-				{ mesh_face.a_uv.u, mesh_face.a_uv.v },
-				{ mesh_face.b_uv.u, mesh_face.b_uv.v },
-				{ mesh_face.c_uv.u, mesh_face.c_uv.v }
-			},
-			.color = triangle_color
-		};
+				// Invert the y values to account for flipped screen y coordinate
+				projected_points[j].y *= -1;
 
-		// Save the projected triangle in the array of triangles to render
-		if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH) {
-			triangles_to_render[num_triangles_to_render] = projected_triangle;
-			num_triangles_to_render++;
+				// Translate the projected points to the middle of the screen
+				projected_points[j].x += (window_width / 2.0);
+				projected_points[j].y += (window_height / 2.0);
+			}
+
+			// Calculate the shade intensity based on how aligned the face normal and the inverse of the light ray
+			float light_intensity_factor = -vec3_dot(normal, light.direction);
+
+			// Calculate the triangle color based on the light angle
+			uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intensity_factor);
+
+			triangle_t triangle_to_render = {
+				.points = {
+					{ projected_points[0].x, projected_points[0].y, projected_points[0].z, projected_points[0].w },
+					{ projected_points[1].x, projected_points[1].y, projected_points[1].z, projected_points[1].w },
+					{ projected_points[2].x, projected_points[2].y, projected_points[2].z, projected_points[2].w }
+				},
+				.texcoords = {
+					{ triangle_after_clipping.texcoords[0].u, triangle_after_clipping.texcoords[0].v },
+					{ triangle_after_clipping.texcoords[1].u, triangle_after_clipping.texcoords[1].v },
+					{ triangle_after_clipping.texcoords[2].u, triangle_after_clipping.texcoords[2].v }
+				},
+				.color = triangle_color
+			};
+
+			// Save the projected triangle in the array of triangles to render
+			if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH) {
+				triangles_to_render[num_triangles_to_render] = triangle_to_render;
+				num_triangles_to_render++;
+			}
 		}
 	}
 }
