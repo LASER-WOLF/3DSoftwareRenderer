@@ -18,16 +18,29 @@ NOTES:
 - Triangle: a (adjacent), o (opposite), h (hypotenuse)
 
 TODO:
+- Add font rendering?
+- Add shadows?
+- Add FPS counter?
+- Multithreading?
+- Object culling in two phases, broad and narrow with bounding boxes?
 - Move clipping to "clipping space" between projection and perspective divide
 - Add light to textured triangles
 - Change DDA line drawing algorithm to Bresenham
 - Change png color decoding and SDL rendering from RGBA32 -> ARGB8888
-- Change render pipeline to use floating point coordinates
+- Change render pipeline to use floating point coordinates?
 
 BUGS:
 
-DONE:
+VERSION HISTORY:
+	# Eighteenth:
+		(Code Polishing & Refactoring)
+		- Added camera pitch and changed camera controls
+		- Refactored global variables to static in camera.h
+		- Refactored global variables to static in light.h
+		- Added low-res rendering by setting the window_width and window_height to a lower value that the SDL window
+		- Changed the global variables in display.h to static and refactored code with getters and setters
 	# Seventeenth:
+		(Clipping)
 		- Added clipping to the render pipeline in main.c -> update()
 		- Added function to clip polygon against plane
 		- Added function to convert triangle to polygon and polygon to triangles
@@ -36,6 +49,7 @@ DONE:
 		- Added plane_t
 		- Added clipping.h / clipping.c
 	# Sixteenth:
+		(Z-buffer and Camera)
 		- Added simple FPS camera controller (wasd + up/down controls)
 		- Added variable delta-time
 		- Added camera and view matrix for transforming the vertices to camera space
@@ -45,14 +59,17 @@ DONE:
 		- Removed painter's alogrithm depth sorting (replaced with z-buffer)
 		- Added Z-buffer (for textured triangles and filled triangles)
 	# Fifteenth:
-		- Added limit on interpolated UV coords in draw_texel() to stay within texture width/height (to prevent texture buffer overflow due to inaccuracy caused by using int instead of float for x and y)
+		(Textured OBJ Files)
+		- BUG FIX: Added limit on interpolated UV coords in draw_texel() to stay within texture width/height (to prevent texture buffer overflow due to inaccuracy caused by using int instead of float for x and y)
 		- Added loading of UV coords from obj file
 	# Fourteenth:
+		(Perspective Correct Textures and Decoding PNG Files)
 		- Added function to load PNG files using upng.h / upng.c
 		- Added perspective correct interpolation to draw_texel()
 		- Finished draw_textured_triangle()
 		- Fixed typos in vector.c
 	# Thirteenth:
+		(Perspective Correct Textures)
 		- Added draw_texel() function
 	# Twelfth:
 		(Texture Mapping)
