@@ -396,3 +396,401 @@ void draw_textured_triangle(
 		}
 	}
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Triangle Rasterizer
+// (1/3) A Parallel Algorithm for Polygon Rasterization (Juan Pineda): https://www.cs.drexel.edu/~deb39/Classes/Papers/comp175-06-pineda.pdf
+// (2/3) Optimizing the basic rasterizer (Fabian Giesen): https://fgiesen.wordpress.com/2013/02/10/optimizing-the-basic-rasterizer/
+// (3/3) A fast and precise triangle rasterizer (Kristoffer Dyrkorn): https://kristoffer-dyrkorn.github.io/triangle-rasterizer/
+///////////////////////////////////////////////////////////////////////////////
+// Implementation (1/5)
+// Loop through bounding box and check if pixel is inside triangle
+///////////////////////////////////////////////////////////////////////////////
+// int edge_cross(vec2_t* a, vec2_t* b, vec2_t* p) {
+//   vec2_t ab = { b->x - a->x, b->y - a->y };
+//   vec2_t ap = { p->x - a->x, p->y - a->y };
+//   return ab.x * ap.y - ab.y * ap.x;
+// }
+
+// void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, uint32_t color) {
+//   // Finds the bounding box with all candidate pixels
+//   int x_min = MIN(MIN(v0.x, v1.x), v2.x);
+//   int y_min = MIN(MIN(v0.y, v1.y), v2.y);
+//   int x_max = MAX(MAX(v0.x, v1.x), v2.x);
+//   int y_max = MAX(MAX(v0.y, v1.y), v2.y);
+
+//   // Loop all candidate pixels inside the bounding box
+//   for (int y = y_min; y <= y_max; y++) {
+//     for (int x = x_min; x <= x_max; x++) {
+//       vec2_t p = { x, y };
+//       int w0 = edge_cross(&v1, &v2, &p);
+//       int w1 = edge_cross(&v2, &v0, &p);
+//       int w2 = edge_cross(&v0, &v1, &p);
+      
+//       bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+
+//       if (is_inside) {
+//         draw_pixel(x, y, color);
+//       }
+//     }
+//   }
+// }
+///////////////////////////////////////////////////////////////////////////////
+// Implementation (2/5)
+// Added Top-Left Rasterization Rule to avoid overdraw of pixels
+///////////////////////////////////////////////////////////////////////////////
+// bool is_top_left(vec2_t* start, vec2_t* end) {
+//   vec2_t edge = { end->x - start->x, end->y - start->y };
+//   bool is_top_edge = edge.y == 0 && edge.x > 0;
+//   bool is_left_edge = edge.y < 0;
+//   return is_top_edge || is_left_edge;
+// }
+
+// int edge_cross(vec2_t* a, vec2_t* b, vec2_t* p) {
+//   vec2_t ab = { b->x - a->x, b->y - a->y };
+//   vec2_t ap = { p->x - a->x, p->y - a->y };
+//   return ab.x * ap.y - ab.y * ap.x;
+// }
+
+// void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, uint32_t color) {
+//   // Finds the bounding box with all candidate pixels
+//   int x_min = MIN(MIN(v0.x, v1.x), v2.x);
+//   int y_min = MIN(MIN(v0.y, v1.y), v2.y);
+//   int x_max = MAX(MAX(v0.x, v1.x), v2.x);
+//   int y_max = MAX(MAX(v0.y, v1.y), v2.y);
+
+//   // Fill convention (top-left rasterization rule)
+//   int bias0 = is_top_left(&v1, &v2) ? 0 : -1;
+//   int bias1 = is_top_left(&v2, &v0) ? 0 : -1;
+//   int bias2 = is_top_left(&v0, &v1) ? 0 : -1;
+
+//   // Loop all candidate pixels inside the bounding box
+//   for (int y = y_min; y <= y_max; y++) {
+//     for (int x = x_min; x <= x_max; x++) {
+//       vec2_t p = { x, y };
+//       int w0 = edge_cross(&v1, &v2, &p) + bias0;
+//       int w1 = edge_cross(&v2, &v0, &p) + bias1;
+//       int w2 = edge_cross(&v0, &v1, &p) + bias2;
+      
+//       bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+
+//       if (is_inside) {
+//         draw_pixel(x, y, color);
+//       }
+//     }
+//   }
+// }
+///////////////////////////////////////////////////////////////////////////////
+// Implementation (3/5)
+// Added color interpolation with Barycentric coordinates
+///////////////////////////////////////////////////////////////////////////////
+// bool is_top_left(vec2_t* start, vec2_t* end) {
+//   vec2_t edge = { end->x - start->x, end->y - start->y };
+//   bool is_top_edge = edge.y == 0 && edge.x > 0;
+//   bool is_left_edge = edge.y < 0;
+//   return is_top_edge || is_left_edge;
+// }
+
+// int edge_cross(vec2_t* a, vec2_t* b, vec2_t* p) {
+//   vec2_t ab = { b->x - a->x, b->y - a->y };
+//   vec2_t ap = { p->x - a->x, p->y - a->y };
+//   return ab.x * ap.y - ab.y * ap.x;
+// }
+
+// void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2) {
+//   // Finds the bounding box with all candidate pixels
+//   int x_min = MIN(MIN(v0.x, v1.x), v2.x);
+//   int y_min = MIN(MIN(v0.y, v1.y), v2.y);
+//   int x_max = MAX(MAX(v0.x, v1.x), v2.x);
+//   int y_max = MAX(MAX(v0.y, v1.y), v2.y);
+
+//   // Compute the area of the entire triangle/parallelogram
+//   float area = edge_cross(&v0, &v1, &v2);
+
+//   // Fill convention (top-left rasterization rule)
+//   int bias0 = is_top_left(&v1, &v2) ? 0 : -1;
+//   int bias1 = is_top_left(&v2, &v0) ? 0 : -1;
+//   int bias2 = is_top_left(&v0, &v1) ? 0 : -1;
+
+//   // Loop all candidate pixels inside the bounding box
+//   for (int y = y_min; y <= y_max; y++) {
+//     for (int x = x_min; x <= x_max; x++) {
+//       vec2_t p = { x, y };
+//       int w0 = edge_cross(&v1, &v2, &p) + bias0;
+//       int w1 = edge_cross(&v2, &v0, &p) + bias1;
+//       int w2 = edge_cross(&v0, &v1, &p) + bias2;
+      
+//       bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+
+//       if (is_inside) {
+//         float alpha = w0 / area;
+//         float beta  = w1 / area;
+//         float gamma = w2 / area;
+
+//         int a = 0xFF;
+//         int r = (alpha) * colors[0].r + (beta) * colors[1].r + (gamma) * colors[2].r;
+//         int g = (alpha) * colors[0].g + (beta) * colors[1].g + (gamma) * colors[2].g;
+//         int b = (alpha) * colors[0].b + (beta) * colors[1].b + (gamma) * colors[2].b;
+
+//         uint32_t interp_color = 0x00000000;
+//         interp_color = (interp_color | a) << 8;
+//         interp_color = (interp_color | b) << 8;
+//         interp_color = (interp_color | g) << 8;
+//         interp_color = (interp_color | r);
+
+//         draw_pixel(x, y, interp_color);
+//       }
+//     }
+//   }
+// }
+///////////////////////////////////////////////////////////////////////////////
+// Implementation (4/5)
+// Added constant increments per row / column to speed up the function
+///////////////////////////////////////////////////////////////////////////////
+// bool is_top_left(vec2_t* start, vec2_t* end) {
+//   vec2_t edge = { end->x - start->x, end->y - start->y };
+//   bool is_top_edge = edge.y == 0 && edge.x > 0;
+//   bool is_left_edge = edge.y < 0;
+//   return is_top_edge || is_left_edge;
+// }
+
+// int edge_cross(vec2_t* a, vec2_t* b, vec2_t* p) {
+//   vec2_t ab = { b->x - a->x, b->y - a->y };
+//   vec2_t ap = { p->x - a->x, p->y - a->y };
+//   return ab.x * ap.y - ab.y * ap.x;
+// }
+
+// void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2) {
+//   // Finds the bounding box with all candidate pixels
+//   int x_min = MIN(MIN(v0.x, v1.x), v2.x);
+//   int y_min = MIN(MIN(v0.y, v1.y), v2.y);
+//   int x_max = MAX(MAX(v0.x, v1.x), v2.x);
+//   int y_max = MAX(MAX(v0.y, v1.y), v2.y);
+
+//   // Compute the constant delta_s that will be used for the horizontal and vertical steps
+//   int delta_w0_col = (v1.y - v2.y);
+//   int delta_w1_col = (v2.y - v0.y);
+//   int delta_w2_col = (v0.y - v1.y);
+
+//   int delta_w0_row = (v2.x - v1.x);
+//   int delta_w1_row = (v0.x - v2.x);
+//   int delta_w2_row = (v1.x - v0.x);
+
+//   // Compute the area of the entire triangle/parallelogram
+//   float area = edge_cross(&v0, &v1, &v2);
+
+//   // Fill convention (top-left rasterization rule)
+//   int bias0 = is_top_left(&v1, &v2) ? 0 : -1;
+//   int bias1 = is_top_left(&v2, &v0) ? 0 : -1;
+//   int bias2 = is_top_left(&v0, &v1) ? 0 : -1;
+
+//   vec2_t p0 = { x_min, y_min };
+//   int w0_row = edge_cross(&v1, &v2, &p0) + bias0;
+//   int w1_row = edge_cross(&v2, &v0, &p0) + bias1;
+//   int w2_row = edge_cross(&v0, &v1, &p0) + bias2;
+
+//   // Loop all candidate pixels inside the bounding box
+//   for (int y = y_min; y <= y_max; y++) {
+//     int w0 = w0_row;
+//     int w1 = w1_row;
+//     int w2 = w2_row;
+//     for (int x = x_min; x <= x_max; x++) {
+//       bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+//       if (is_inside) {
+//         float alpha = w0 / area;
+//         float beta  = w1 / area;
+//         float gamma = w2 / area;
+
+//         int a = 0xFF;
+//         int r = (alpha) * colors[0].r + (beta) * colors[1].r + (gamma) * colors[2].r;
+//         int g = (alpha) * colors[0].g + (beta) * colors[1].g + (gamma) * colors[2].g;
+//         int b = (alpha) * colors[0].b + (beta) * colors[1].b + (gamma) * colors[2].b;
+
+//         uint32_t interp_color = 0x00000000;
+//         interp_color = (interp_color | a) << 8;
+//         interp_color = (interp_color | b) << 8;
+//         interp_color = (interp_color | g) << 8;
+//         interp_color = (interp_color | r);
+
+//         draw_pixel(x, y, interp_color);
+//       }
+//       w0 += delta_w0_col;
+//       w1 += delta_w1_col;
+//       w2 += delta_w2_col;
+//     }
+//     w0_row += delta_w0_row;
+//     w1_row += delta_w1_row;
+//     w2_row += delta_w2_row;
+//   }
+// }
+///////////////////////////////////////////////////////////////////////////////
+// Implementation (5/6)
+// Added subpixel rasterization by replacing integers with floating-point numbers
+// https://github.com/gustavopezzi/triangle-rasterizer-float.git
+///////////////////////////////////////////////////////////////////////////////
+// bool is_top_left(vec2_t* start, vec2_t* end) {
+//   vec2_t edge = { end->x - start->x, end->y - start->y };
+//   bool is_top_edge = edge.y == 0 && edge.x > 0;
+//   bool is_left_edge = edge.y < 0;
+//   return is_top_edge || is_left_edge;
+// }
+
+// float edge_cross(vec2_t* a, vec2_t* b, vec2_t* p) {
+//   vec2_t ab = { b->x - a->x, b->y - a->y };
+//   vec2_t ap = { p->x - a->x, p->y - a->y };
+//   return ab.x * ap.y - ab.y * ap.x;
+// }
+
+// void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2) {
+//   // Finds the bounding box with all candidate pixels
+//   int x_min = floor(MIN(MIN(v0.x, v1.x), v2.x));
+//   int y_min = floor(MIN(MIN(v0.y, v1.y), v2.y));
+//   int x_max = ceil(MAX(MAX(v0.x, v1.x), v2.x));
+//   int y_max = ceil(MAX(MAX(v0.y, v1.y), v2.y));
+
+//   // Compute the constant delta_s that will be used for the horizontal and vertical steps
+//   float delta_w0_col = (v1.y - v2.y);
+//   float delta_w1_col = (v2.y - v0.y);
+//   float delta_w2_col = (v0.y - v1.y);
+//   float delta_w0_row = (v2.x - v1.x);
+//   float delta_w1_row = (v0.x - v2.x);
+//   float delta_w2_row = (v1.x - v0.x);
+
+//   // Compute the area of the entire triangle/parallelogram
+//   float area = edge_cross(&v0, &v1, &v2);
+
+//   // Fill convention (top-left rasterization rule)
+//   float bias0 = is_top_left(&v1, &v2) ? 0 : -0.0001;
+//   float bias1 = is_top_left(&v2, &v0) ? 0 : -0.0001;
+//   float bias2 = is_top_left(&v0, &v1) ? 0 : -0.0001;
+
+//   vec2_t p0 = { x_min + 0.5f, y_min + 0.5f };
+//   float w0_row = edge_cross(&v1, &v2, &p0) + bias0;
+//   float w1_row = edge_cross(&v2, &v0, &p0) + bias1;
+//   float w2_row = edge_cross(&v0, &v1, &p0) + bias2;
+
+//   // Loop all candidate pixels inside the bounding box
+//   for (int y = y_min; y <= y_max; y++) {
+//     float w0 = w0_row;
+//     float w1 = w1_row;
+//     float w2 = w2_row;
+//     for (int x = x_min; x <= x_max; x++) {
+//       bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+//       if (is_inside) {
+//         float alpha = w0 / area;
+//         float beta  = w1 / area;
+//         float gamma = w2 / area;
+
+//         int a = 0xFF;
+//         int r = (alpha) * colors[0].r + (beta) * colors[1].r + (gamma) * colors[2].r;
+//         int g = (alpha) * colors[0].g + (beta) * colors[1].g + (gamma) * colors[2].g;
+//         int b = (alpha) * colors[0].b + (beta) * colors[1].b + (gamma) * colors[2].b;
+
+//         uint32_t interp_color = 0x00000000;
+//         interp_color = (interp_color | a) << 8;
+//         interp_color = (interp_color | b) << 8;
+//         interp_color = (interp_color | g) << 8;
+//         interp_color = (interp_color | r);
+
+//         draw_pixel(x, y, interp_color);
+//       }
+//       w0 += delta_w0_col;
+//       w1 += delta_w1_col;
+//       w2 += delta_w2_col;
+//     }
+//     w0_row += delta_w0_row;
+//     w1_row += delta_w1_row;
+//     w2_row += delta_w2_row;
+//   }
+// }
+///////////////////////////////////////////////////////////////////////////////
+// Implementation (6/6)
+// Changed floating-point numbers to 16.16 fixed point numbers for better accuracy
+// https://github.com/gustavopezzi/triangle-rasterizer-fix16.git
+// Requires libfixmath library: https://code.google.com/archive/p/libfixmath/
+///////////////////////////////////////////////////////////////////////////////
+// bool is_top_left(vec2_t* start, vec2_t* end) {
+//   vec2_t edge = { fix16_sub(end->x, start->x), fix16_sub(end->y, start->y) };
+//   bool is_top_edge = edge.y == 0 && edge.x > 0;
+//   bool is_left_edge = edge.y < 0;
+//   return is_left_edge || is_top_edge;
+// }
+
+// fix16_t edge_cross(vec2_t* a, vec2_t* b, vec2_t* p) {
+//   vec2_t ab = { fix16_sub(b->x, a->x), fix16_sub(b->y, a->y) };
+//   vec2_t ap = { fix16_sub(p->x, a->x), fix16_sub(p->y, a->y) };
+//   return fix16_sub(fix16_mul(ab.x, ap.y), fix16_mul(ab.y, ap.x));
+// }
+
+// void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2) {
+//   // Finds the bounding box with all candidate pixels
+//   int x_min = fix16_to_int(MIN(MIN(v0.x, v1.x), v2.x));
+//   int y_min = fix16_to_int(MIN(MIN(v0.y, v1.y), v2.y));
+//   int x_max = fix16_to_int(MAX(MAX(v0.x, v1.x), v2.x));
+//   int y_max = fix16_to_int(MAX(MAX(v0.y, v1.y), v2.y));
+
+//   // Compute the area of the entire triangle/parallelogram
+//   fix16_t area = edge_cross(&v0, &v1, &v2);
+
+//   // Compute the constant delta_s that will be used for the horizontal and vertical steps
+//   fix16_t delta_w0_col = fix16_sub(v1.y, v2.y);
+//   fix16_t delta_w1_col = fix16_sub(v2.y, v0.y);
+//   fix16_t delta_w2_col = fix16_sub(v0.y, v1.y);
+//   fix16_t delta_w0_row = fix16_sub(v2.x, v1.x);
+//   fix16_t delta_w1_row = fix16_sub(v0.x, v2.x);
+//   fix16_t delta_w2_row = fix16_sub(v1.x, v0.x);
+
+//   // Rasterization fill convention (top-left rule)
+//   fix16_t bias0 = is_top_left(&v1, &v2) ? 0 : -0x00000001;
+//   fix16_t bias1 = is_top_left(&v2, &v0) ? 0 : -0x00000001;
+//   fix16_t bias2 = is_top_left(&v0, &v1) ? 0 : -0x00000001;
+
+//   // Compute the edge functions for the fist (top-left) point
+//   vec2_t p0 = {
+//     fix16_from_float(x_min + 0.5f),
+//     fix16_from_float(y_min + 0.5f)
+//   };
+//   fix16_t w0_row = fix16_add(edge_cross(&v1, &v2, &p0), bias0);
+//   fix16_t w1_row = fix16_add(edge_cross(&v2, &v0, &p0), bias1);
+//   fix16_t w2_row = fix16_add(edge_cross(&v0, &v1, &p0), bias2);
+
+//   // Loop all candidate pixels inside the bounding box
+//   for (int y = y_min; y <= y_max; y++) {
+//     fix16_t w0 = w0_row;
+//     fix16_t w1 = w1_row;
+//     fix16_t w2 = w2_row;
+    
+//     for (int x = x_min; x <= x_max; x++) {
+//       bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+//       if (is_inside) {
+//         // Compute the normalized barycentric weights alpha, beta, and gamma
+//         float alpha = fix16_to_float(fix16_div(w0, area));
+//         float beta = fix16_to_float(fix16_div(w1, area));
+//         float gamma = fix16_to_float(fix16_div(w2, area));
+
+//         // Find the new RGB components interpolating vertex values using alpha, beta, and gamma
+//         int a = 0xFF;
+//         int r = (alpha) * colors[0].r + (beta) * colors[1].r + (gamma) * colors[2].r;
+//         int g = (alpha) * colors[0].g + (beta) * colors[1].g + (gamma) * colors[2].g;
+//         int b = (alpha) * colors[0].b + (beta) * colors[1].b + (gamma) * colors[2].b;
+
+//         // Combine A, R, G, and B into one final 32-bit color
+//         uint32_t interp_color = 0x00000000;
+//         interp_color = (interp_color | a) << 8;
+//         interp_color = (interp_color | b) << 8;
+//         interp_color = (interp_color | g) << 8;
+//         interp_color = (interp_color | r);
+
+//         draw_pixel(x, y, interp_color);
+//       }
+//       // Increment one step to the right
+//       w0 = fix16_add(w0, delta_w0_col);
+//       w1 = fix16_add(w1, delta_w1_col);
+//       w2 = fix16_add(w2, delta_w2_col);
+//     }
+//     // Increment one row step
+//     w0_row = fix16_add(w0_row, delta_w0_row);
+//     w1_row = fix16_add(w1_row, delta_w1_row);
+//     w2_row = fix16_add(w2_row, delta_w2_row);
+//   }
+// }
