@@ -1,8 +1,6 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
-#include "upng.h"
-
 typedef struct {
 	float u;
 	float v;

@@ -8,6 +8,7 @@ void init_camera(vec3_t position, vec3_t direction) {
 	camera.forward_velocity = vec3_new(0, 0, 0);
 	camera.yaw = 0.0;
 	camera.pitch = 0.0;
+	vec3_normalize(&camera.direction);
 };
 
 vec3_t get_camera_position(void) {

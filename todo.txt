@@ -1,4 +1,11 @@
 NOTES:
+- GPU Gems: https://developer.nvidia.com/gpugems/gpugems
+- Real-Time Rendering, Fourth Edition: https://www.realtimerendering.com/
+- Foundations of Game Engine Development (Eric Lengyel): https://foundationsofgameenginedev.com/
+- Graphics Programming Black Book (Michael Abrash): https://www.drdobbs.com/parallel/graphics-programming-black-book/184404919
+- Texture Mapping Technical Articles (Chris Hecker): https://www.chrishecker.com/Miscellaneous_Technical_Articles
+- Rasterization Rules & the Edge Function (ScratchAPixel.com): https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/rasterization-stage
+- Rasterization Rules (Microsoft Direct3D): https://docs.microsoft.com/en-us/windows/win32/direct3d9/rasterization-rules#triangle-rasterization-rules
 - On-Line Computer Graphics Notes - Clipping: https://import.cdn.thinkific.com/167815/JoyKennethClipping-200905-175314.pdf
 - Building a PS1 style retro 3D renderer: https://www.david-colson.com/2021/11/30/ps1-style-renderer.html
 - Perspective-Correct Interpolation paper: https://s3.amazonaws.com/thinkific/file_uploads/167815/attachments/c06/b72/f58/KokLimLow-PerspectiveCorrectInterpolation.pdf
@@ -18,23 +25,46 @@ NOTES:
 - Triangle: a (adjacent), o (opposite), h (hypotenuse)
 
 TODO:
-- Add font rendering?
-- Add shadows?
-- Add FPS counter?
-- Multithreading?
-- Object culling in two phases, broad and narrow with bounding boxes?
+- Add mouse position tracking and mouse controls
+- Add controls to move up / down (R & F keys)
+- Add controls to strafe (A & D keys)
+- Add "floating" movement (using velocity)
+- Lack of performance checks
+- Excess of global variables
+- Most parameters are being passed by value (change to reference/pointer)
+- Check for memory leaks (use a debugger (gdb) or a profiler (valgrind))
+- Add font rendering
+- Debug: Vizualize light direction
+- Debug: Vizualize normals
+- Add FPS counter
+- Add multiple layers of color buffers that combines to "main" color buffer: background->3d->effects->ui->animations
+- Add transparancy to color buffer layers by using SDL_SetColorKey
+- Add shadows
+- Object culling in two phases, broad and narrow with bounding boxes
 - Move clipping to "clipping space" between projection and perspective divide
-- Add light to textured triangles
-- Change DDA line drawing algorithm to Bresenham
+- Change render pipeline to use floating point coordinates
 - Change png color decoding and SDL rendering from RGBA32 -> ARGB8888
-- Change render pipeline to use floating point coordinates?
-- move texture_width, texture_height and texture_buffer from texel function to triangle function
+- Change DDA line drawing algorithm to Bresenham
+- Multithreading
+- Move face culling to after the perspective projection using "signed face area" technique
+- Add dithering to shaded triangles
+- Add gouraud shading
+
+DONE:
+- Light: Set intensity
+- Move texture_width, texture_height and texture_buffer from texel function to triangle function
+- Add light to textured triangles
 
 BUGS:
 
 VERSION HISTORY:
-	# Eighteenth:
+	# Twentieth:
+		- Added light intensity in light_t
+		- Added lighting to textured triangles
+		- Removed color from triangle_t and face_t and added light to triangle_t
+	# Nineteenth:
 		(Multiple Meshes)
+		- Finishing up the implementation, cleaning up code in main.c and making it more readable
 		- Refactored code and added support for multiple meshes
 	# Eighteenth:
 		(Code Polishing & Refactoring)

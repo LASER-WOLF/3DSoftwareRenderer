@@ -15,6 +15,12 @@
 #include "mesh.h"
 #include "clipping.h"
 
+static uint32_t color_bg = 0xFF111111;
+static uint32_t color_grid = 0xFF444444;
+static uint32_t color_vertex_point = 0xFF0000DD;
+static uint32_t color_wireframe = 0xFFDDDDDD;
+static uint32_t color_filled_triangle = 0xFFFFFFFF;
+
 /////////////////////////////////////////////////////////////////////////////////////
 // Global variables for execution status and game loop
 /////////////////////////////////////////////////////////////////////////////////////
@@ -48,7 +54,7 @@ void setup(void) {
 	init_camera(vec3_new(0, 0, 0), vec3_new(0, 0, 1));
 
 	// Initialize the scene light
-	init_light(vec3_new(0, 0, 1));
+	init_light(1.0, vec3_new(0.5, -0.5, 1));
 
 	// Initialize the perspective projection matrix
 	float aspect_y = (float)get_window_height() / (float)get_window_width();
@@ -285,10 +291,7 @@ void process_graphics_pipeline_stages(mesh_t* mesh) {
 			}
 
 			// Calculate the shade intensity based on how aligned the face normal and the inverse of the light ray
-			float light_intensity_factor = -vec3_dot(face_normal, get_light_direction());
-
-			// Calculate the triangle color based on the light angle
-			uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intensity_factor);
+			float light_intensity_factor = get_light_intensity() * -vec3_dot(face_normal, get_light_direction());
 
 			triangle_t triangle_to_render = {
 				.points = {
@@ -301,7 +304,7 @@ void process_graphics_pipeline_stages(mesh_t* mesh) {
 					{ triangle_after_clipping.texcoords[1].u, triangle_after_clipping.texcoords[1].v },
 					{ triangle_after_clipping.texcoords[2].u, triangle_after_clipping.texcoords[2].v }
 				},
-				.color = triangle_color,
+				.light = light_intensity_factor,
                 .texture = mesh->texture
 			};
 
@@ -356,10 +359,11 @@ void update(void) {
 // Render function to draw objects on the display
 /////////////////////////////////////////////////////////////////////////////////////
 void render(void) {
-	clear_color_buffer(0xFF111111);
+	
+	clear_color_buffer(color_bg);
 	clear_z_buffer();
 
-	draw_grid();
+	draw_grid(color_grid);
 
 	// Loop all projected triangles and render them
 	for (int i = 0; i < num_triangles_to_render; i++) {
@@ -371,7 +375,7 @@ void render(void) {
 				triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w,
 				triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w,
 				triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w,
-				triangle.color
+				triangle.light, color_filled_triangle
 			);
 		}
 
@@ -381,7 +385,7 @@ void render(void) {
 				triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, triangle.texcoords[0].u, triangle.texcoords[0].v, // vertex A
 				triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w, triangle.texcoords[1].u, triangle.texcoords[1].v, // vertex B
 				triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.texcoords[2].u, triangle.texcoords[2].v, // vertex C
-				triangle.texture
+				triangle.light, triangle.texture
 			);
 		}
 
@@ -391,15 +395,15 @@ void render(void) {
 				triangle.points[0].x, triangle.points[0].y, 
 				triangle.points[1].x, triangle.points[1].y, 
 				triangle.points[2].x, triangle.points[2].y, 
-				0xFFDDDDDD
+				color_wireframe
 			);
 		}
 
 		// Draw vertex points
 		if (should_render_wire_vertex()) {
-			draw_rect(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xFF0000DD);
-			draw_rect(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xFF0000DD);
-			draw_rect(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xFF0000DD);
+			draw_rect(triangle.points[0].x, triangle.points[0].y, 3, 3, color_vertex_point);
+			draw_rect(triangle.points[1].x, triangle.points[1].y, 3, 3, color_vertex_point);
+			draw_rect(triangle.points[2].x, triangle.points[2].y, 3, 3, color_vertex_point);
 		}
 	}
 

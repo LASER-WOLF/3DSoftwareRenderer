@@ -8,15 +8,6 @@
 static mesh_t meshes[MAX_NUM_MESHES];
 static int mesh_count = 0;
 
-void load_mesh(char* obj_filename, char* png_filename, vec3_t scale, vec3_t translation, vec3_t rotation) {
-	load_mesh_obj_data(&meshes[mesh_count], obj_filename);
-	load_mesh_png_data(&meshes[mesh_count], png_filename);
-	meshes[mesh_count].scale = scale;
-	meshes[mesh_count].translation = translation;
-	meshes[mesh_count].rotation = rotation;
-	mesh_count++;
-}
-
 void load_mesh_obj_data(mesh_t* mesh, char* obj_filename){
 	FILE* file = fopen(obj_filename, "r");
 	char line[1024];
@@ -51,8 +42,7 @@ void load_mesh_obj_data(mesh_t* mesh, char* obj_filename){
 					.c = vertex_indices[2] - 1,
 					.a_uv = texcoords[texture_indices[0] - 1],
 					.b_uv = texcoords[texture_indices[1] - 1],
-					.c_uv = texcoords[texture_indices[2] - 1],
-					.color = 0xFFFFFFFF
+					.c_uv = texcoords[texture_indices[2] - 1]
 				};
 				array_push(mesh->faces, face);
 			}
@@ -72,12 +62,33 @@ void load_mesh_png_data(mesh_t* mesh, char* png_filename) {
     }
 }
 
-mesh_t* get_mesh(int index) {
-	return &meshes[index];
+void load_mesh(char* obj_filename, char* png_filename, vec3_t scale, vec3_t translation, vec3_t rotation) {
+	load_mesh_obj_data(&meshes[mesh_count], obj_filename);
+	load_mesh_png_data(&meshes[mesh_count], png_filename);
+	meshes[mesh_count].scale = scale;
+	meshes[mesh_count].translation = translation;
+	meshes[mesh_count].rotation = rotation;
+	mesh_count++;
+}
+
+mesh_t* get_mesh(int mesh_index) {
+	return &meshes[mesh_index];
 }
 
 int get_num_meshes(void) {
 	return mesh_count;
+}
+
+void rotate_mesh_x(int mesh_index, float angle) {
+    meshes[mesh_index].rotation.x += angle;
+}
+
+void rotate_mesh_y(int mesh_index, float angle) {
+    meshes[mesh_index].rotation.y += angle;
+}
+
+void rotate_mesh_z(int mesh_index, float angle) {
+    meshes[mesh_index].rotation.z += angle;
 }
 
 void free_meshes(void) {
