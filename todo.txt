@@ -28,10 +28,14 @@ TODO:
 - Change DDA line drawing algorithm to Bresenham
 - Change png color decoding and SDL rendering from RGBA32 -> ARGB8888
 - Change render pipeline to use floating point coordinates?
+- move texture_width, texture_height and texture_buffer from texel function to triangle function
 
 BUGS:
 
 VERSION HISTORY:
+	# Eighteenth:
+		(Multiple Meshes)
+		- Refactored code and added support for multiple meshes
 	# Eighteenth:
 		(Code Polishing & Refactoring)
 		- Added camera pitch and changed camera controls

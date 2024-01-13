@@ -63,11 +63,8 @@ void setup(void) {
 	init_frustum_planes(fov_x, fov_y, z_near, z_far);
 
 	// Loads the cube values in the mesh data structure
-	//load_cube_mesh_data();
-	load_obj_file_data("./assets/f22.obj");
-
-	// Load the texture information from an external PNG file
-	load_png_texture_data("./assets/f22.png");
+	load_mesh("./assets/f22.obj", "./assets/f22.png", vec3_new(1, 1, 1), vec3_new(-3, 0, 7), vec3_new(0, 0, 0));
+	load_mesh("./assets/efa.obj", "./assets/efa.png", vec3_new(1, 1, 1), vec3_new(+3, 0, 7), vec3_new(0, 0, 0));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -148,43 +145,38 @@ void process_input(void) {
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////////
-// Update function frame by frame with a fixed time step
-/////////////////////////////////////////////////////////////////////////////////////
-void update(void) {	
-	// Wait some time until the reach the target frame time in milliseconds
-	int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
-
-	// Only delay execution if we are running too fast
-	if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
-		SDL_Delay(time_to_wait);
-	}
-
-	// Get a delta time factor converted to secdons to be used to update our game objects
-	delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0;
-
-	previous_frame_time = SDL_GetTicks();
-
-	// Initialize the counter of triangles to render for the current frame
-	num_triangles_to_render = 0;
-
-	// Change the mesh scale / rotation values per animation frame
-	//mesh.scale.x += 0.002 * delta_time;
-	//mesh.scale.y += 0.001 * delta_time;
-	//mesh.scale.z += 0.001 * delta_time;
-	mesh.rotation.x += 0.5 * delta_time;
-	//mesh.rotation.y += 0.5 * delta_time;
-	//mesh.rotation.z += 0.5 * delta_time;
-	//mesh.translation.x += 0.01 * delta_time;
-	mesh.translation.z = 5.0;
-
-
+///////////////////////////////////////////////////////////////////////////////
+// Process the graphics pipeline stages for all the mesh triangles
+///////////////////////////////////////////////////////////////////////////////
+// +-------------+
+// | Model space |  <-- original mesh vertices
+// +-------------+
+// |   +-------------+
+// `-> | World space |  <-- multiply by world matrix
+//     +-------------+
+//     |   +--------------+
+//     `-> | Camera space |  <-- multiply by view matrix
+//         +--------------+
+//         |    +------------+
+//         `--> |  Clipping  |  <-- clip against the six frustum planes
+//              +------------+
+//              |    +------------+
+//              `--> | Projection |  <-- multiply by projection matrix
+//                   +------------+
+//                   |    +-------------+
+//                   `--> | Image space |  <-- apply perspective divide
+//                        +-------------+
+//                        |    +--------------+
+//                        `--> | Screen space |  <-- ready to render
+//                             +--------------+
+///////////////////////////////////////////////////////////////////////////////
+void process_graphics_pipeline_stages(mesh_t* mesh) {
 	// Create a scale, rotation and translation matrices that will be used to multiply the mesh vertices
-	mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
-	mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
-	mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
-	mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
-	mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
+	mat4_t scale_matrix = mat4_make_scale(mesh->scale.x, mesh->scale.y, mesh->scale.z);
+	mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh->rotation.x);
+	mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh->rotation.y);
+	mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh->rotation.z);
+	mat4_t translation_matrix = mat4_make_translation(mesh->translation.x, mesh->translation.y, mesh->translation.z);
 
 	// Update camera look at target to create view matrix
 	vec3_t target = get_camera_lookat_target();
@@ -192,14 +184,14 @@ void update(void) {
 	view_matrix = mat4_look_at(get_camera_position(), target, up_direction);
 
 	// Loop all triangle faces of the mesh
-	int num_faces = array_length(mesh.faces);
+	int num_faces = array_length(mesh->faces);
 	for (int i = 0; i < num_faces; i++) {
-		face_t mesh_face = mesh.faces[i];
+		face_t mesh_face = mesh->faces[i];
 
 		vec3_t face_vertices[3];
-		face_vertices[0] = mesh.vertices[mesh_face.a];
-		face_vertices[1] = mesh.vertices[mesh_face.b];
-		face_vertices[2] = mesh.vertices[mesh_face.c];
+		face_vertices[0] = mesh->vertices[mesh_face.a];
+		face_vertices[1] = mesh->vertices[mesh_face.b];
+		face_vertices[2] = mesh->vertices[mesh_face.c];
 
 		vec4_t transformed_vertices[3];
 
@@ -227,29 +219,16 @@ void update(void) {
 			transformed_vertices[j] = transformed_vertex;
 		}
 
-		// Backface culling test
-		vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]); /*   A   */
-		vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]); /*  / \  */
-		vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]); /* C---B */
+		// Calculate the triangle face normal
+		vec3_t face_normal = get_triangle_normal(transformed_vertices);
 
-		// Get the vector subtraction of B-A and C-A
-		vec3_t vector_ab = vec3_sub(vector_b, vector_a);
-		vec3_t vector_ac = vec3_sub(vector_c, vector_a);
-		vec3_normalize(&vector_ab);
-		vec3_normalize(&vector_ac);
+		if (should_cull_backface()) {
+			// Find the vector between a point in the triangle (A) and the camera origin
+			vec3_t camera_ray = vec3_sub(vec3_new(0, 0, 0), vec3_from_vec4(transformed_vertices[0]));
 
-		// Compute the face normal using cross product to find the perpendicular
-		vec3_t normal = vec3_cross(vector_ab, vector_ac);
-		vec3_normalize(&normal);
+			// Check normal alignment
+			float dot_normal_camera = vec3_dot(face_normal, camera_ray);
 
-		// Find the vector between a point in the triangle (A) and the camera origin
-		vec3_t origin = { 0, 0, 0 };
-		vec3_t camera_ray = vec3_sub(origin, vector_a);
-
-		// Check normal alignment
-		float dot_normal_camera = vec3_dot(normal, camera_ray);
-
-		if (is_cull_backface()) {
 			// Bypass the triangles that are looking away from the camera
 			if (dot_normal_camera < 0) {
 				continue;
@@ -306,7 +285,7 @@ void update(void) {
 			}
 
 			// Calculate the shade intensity based on how aligned the face normal and the inverse of the light ray
-			float light_intensity_factor = -vec3_dot(normal, get_light_direction());
+			float light_intensity_factor = -vec3_dot(face_normal, get_light_direction());
 
 			// Calculate the triangle color based on the light angle
 			uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intensity_factor);
@@ -322,7 +301,8 @@ void update(void) {
 					{ triangle_after_clipping.texcoords[1].u, triangle_after_clipping.texcoords[1].v },
 					{ triangle_after_clipping.texcoords[2].u, triangle_after_clipping.texcoords[2].v }
 				},
-				.color = triangle_color
+				.color = triangle_color,
+                .texture = mesh->texture
 			};
 
 			// Save the projected triangle in the array of triangles to render
@@ -330,6 +310,45 @@ void update(void) {
 				triangles_to_render[num_triangles_to_render++] = triangle_to_render;
 			}
 		}
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+// Update function frame by frame with a fixed time step
+/////////////////////////////////////////////////////////////////////////////////////
+void update(void) {	
+	// Wait some time until the reach the target frame time in milliseconds
+	int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
+
+	// Only delay execution if we are running too fast
+	if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
+		SDL_Delay(time_to_wait);
+	}
+
+	// Get a delta time factor converted to secdons to be used to update our game objects
+	delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0;
+
+	previous_frame_time = SDL_GetTicks();
+
+	// Initialize the counter of triangles to render for the current frame
+	num_triangles_to_render = 0;
+
+	// Loop all the meshes in the scene
+	for (int mesh_index = 0; mesh_index < get_num_meshes(); mesh_index++) {
+		mesh_t* mesh = get_mesh(mesh_index);
+
+		// Change the mesh scale / rotation values per animation frame
+		//mesh.scale.x += 0.002 * delta_time;
+		//mesh.scale.y += 0.001 * delta_time;
+		//mesh.scale.z += 0.001 * delta_time;
+		mesh->rotation.x += 0.5 * delta_time;
+		//mesh.rotation.y += 0.5 * delta_time;
+		//mesh.rotation.z += 0.5 * delta_time;
+		//mesh.translation.x += 0.01 * delta_time;
+		//mesh.translation.z = 5.0;
+
+		// Process the graphics pipeline stages for every mesh of the 3D scene
+		process_graphics_pipeline_stages(mesh);
 	}
 }
 
@@ -347,7 +366,7 @@ void render(void) {
 		triangle_t triangle = triangles_to_render[i];
 
 		// Draw filled triangle
-		if (should_render_filled_triangles()) {
+		if (should_render_filled_triangle()) {
 			draw_filled_triangle(
 				triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w,
 				triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w,
@@ -356,18 +375,18 @@ void render(void) {
 			);
 		}
 
-        // Draw textured triangle
-        if (should_render_textured_triangles()) {
-            draw_textured_triangle(
-                triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, triangle.texcoords[0].u, triangle.texcoords[0].v, // vertex A
-                triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w, triangle.texcoords[1].u, triangle.texcoords[1].v, // vertex B
-                triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.texcoords[2].u, triangle.texcoords[2].v, // vertex C
-                mesh_texture
-            );
-        }
+		// Draw textured triangle
+		if (should_render_textured_triangle()) {
+			draw_textured_triangle(
+				triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, triangle.texcoords[0].u, triangle.texcoords[0].v, // vertex A
+				triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w, triangle.texcoords[1].u, triangle.texcoords[1].v, // vertex B
+				triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.texcoords[2].u, triangle.texcoords[2].v, // vertex C
+				triangle.texture
+			);
+		}
 
 		// Draw unfilled triangle
-		if (should_render_wireframe()) {
+		if (should_render_wire()) {
 			draw_triangle(
 				triangle.points[0].x, triangle.points[0].y, 
 				triangle.points[1].x, triangle.points[1].y, 
@@ -391,9 +410,7 @@ void render(void) {
 // Free memory taht was dunamicaly allocated by the program
 /////////////////////////////////////////////////////////////////////////////////////
 void free_resources(void) {
-	upng_free(png_texture);
-	array_free(mesh.vertices);
-	array_free(mesh.faces);
+	free_meshes();
 	destroy_window();
 }
 

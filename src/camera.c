@@ -1,5 +1,4 @@
 #include "camera.h"
-#include "matrix.h"
 
 static camera_t camera;
 

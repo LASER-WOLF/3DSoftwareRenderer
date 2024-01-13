@@ -5,11 +5,11 @@
 #include "matrix.h"
 
 typedef struct {
-	vec3_t position;
-	vec3_t direction;
-	vec3_t forward_velocity;
-	float yaw;
-	float pitch;
+    vec3_t position;
+    vec3_t direction;
+    vec3_t forward_velocity;
+    float yaw;
+    float pitch;
 } camera_t;
 
 void init_camera(vec3_t position, vec3_t direction);
