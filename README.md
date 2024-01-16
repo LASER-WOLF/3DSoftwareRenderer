@@ -4,8 +4,6 @@ A software 3D renderer made using SDL and the C programming language by followin
 
 > [!TIP]
 > See [todo.txt](todo.txt) for more info
-
-> [!TIP]
 > See [gamedev_resources.txt](gamedev_resources.txt) for a list of gamedev resources
 
 ![screenshot](screenshots/screenshot_00.png?raw=true "screenshot")
@@ -21,11 +19,3 @@ A software 3D renderer made using SDL and the C programming language by followin
 ![screenshot](screenshots/screenshot_05.png?raw=true "screenshot")
 
 ![screenshot](screenshots/screenshot_06.png?raw=true "screenshot")
-
-![screenshot](screenshots/screenshot_07.png?raw=true "screenshot")
-
-![screenshot](screenshots/screenshot_08.png?raw=true "screenshot")
-
-![screenshot](screenshots/screenshot_09.png?raw=true "screenshot")
-
-![screenshot](screenshots/screenshot_10.png?raw=true "screenshot")
