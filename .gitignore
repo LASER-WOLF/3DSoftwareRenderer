@@ -50,3 +50,17 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Selected .obj files
+crab.obj
+crab.png
+drone.obj
+drone.png
+efa.obj
+efa.png
+f117.obj
+f117.png
+f22.obj
+f22.png
+runway.obj
+runway.png

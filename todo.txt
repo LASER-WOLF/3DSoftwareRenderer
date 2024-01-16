@@ -35,6 +35,7 @@ NOTES:
 - Triangle: a (adjacent), o (opposite), h (hypotenuse)
 
 TODO:
+- Replace pi number with pi const (main.c)
 - Add font rendering (text.h / text.c)
 - Add multiple layers of color buffers that combines to "main" color buffer: background->3d->effects->ui->animations (update layers when needed, high framerate for main layer, but lower framerate for 3d rendering)
 - Add transparancy to color buffer layers by using SDL_SetColorKey

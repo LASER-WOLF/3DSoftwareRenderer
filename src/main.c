@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
-#define SDL_MAIN_HANDLED // TODO: REMOVE THIS LINE?
 #include <SDL2/SDL.h>
 #include "upng.h"
 #include "array.h"
@@ -59,7 +58,7 @@ void setup(void) {
 	// Initialize the perspective projection matrix
 	float aspect_y = (float)get_window_height() / (float)get_window_width();
 	float aspect_x = (float)get_window_width() / (float)get_window_height();
-	float fov_y = M_PI / 3.0;  // the same as 180 / 3 or 60deg
+	float fov_y = 3.141592 / 3.0;  // the same as 180 / 3 or 60deg
 	float fov_x = atan(tan(fov_y / 2) * aspect_x) * 2.0;
 	float z_near = 0.5;
 	float z_far = 20.0;
@@ -69,8 +68,8 @@ void setup(void) {
 	init_frustum_planes(fov_x, fov_y, z_near, z_far);
 
 	// Loads the cube values in the mesh data structure
-	load_mesh("./assets/f22.obj", "./assets/f22.png", vec3_new(1, 1, 1), vec3_new(-3, 0, 7), vec3_new(0, 0, 0));
-	load_mesh("./assets/efa.obj", "./assets/efa.png", vec3_new(1, 1, 1), vec3_new(+3, 0, 7), vec3_new(0, 0, 0));
+	load_mesh("./assets/cube.obj", "./assets/cube.png", vec3_new(1, 1, 1), vec3_new(-3, 0, 7), vec3_new(0, 0, 0));
+	load_mesh("./assets/cube.obj", "./assets/cube.png", vec3_new(1, 1, 1), vec3_new(+3, 0, 7), vec3_new(0, 0, 0));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

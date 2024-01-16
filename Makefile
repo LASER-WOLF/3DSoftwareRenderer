@@ -1,8 +1,8 @@
 build:
-	gcc -Wall -std=c99 ./src/*.c -I"C:\SDL2\include" -L"C:\SDL2\lib" -lmingw32 -lSDL2main -lSDL2 -lm -o 3drenderer.exe
+	gcc -Wall -Wfatal-errors -std=c99 ./src/*.c -lSDL2 -lm -o 3drenderer
 
 run:
-	./3drenderer.exe
+	./3drenderer
 
 clean:
-	del "3drenderer.exe"
+	del "3drenderer"
